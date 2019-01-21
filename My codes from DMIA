@@ -1,0 +1,46 @@
+Задача 1:
+
+Дан массив arr, требуется для каждой позиции i найти номер элемента arr_i в массиве arr, отсортированном по убыванию. 
+Все значения массива arr различны.
+
+Мой код:
+
+def function_1(arr):
+    arr2 = np.unique(arr)
+    arr3 = arr2[::-1]
+    arr4 = np.array([], dtype=int)
+    for i in range (len(arr)):
+        for j in range (len(arr3)):
+            if arr[i] == arr3[j]:
+                arr4 = np.append(arr4,j)
+    return arr4
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+Задача 2:
+
+Дана матрица X, нужно найти след матрицы X*X^T
+
+Мой код:
+
+def function_1(arr):
+    arr3 = np.array([])
+    arr1 = arr[::-1]
+    arr2 = np.argsort(arr1)
+    return arr2
+    
+---------------------------------------------------------------------------------------------------------------------------------
+
+Задача 3:
+
+Дан набор точек с координатам точек points_x и points_y. Нужно найти такую точку p с нулевой координатой y 
+(то есть с координатами вида (x, 0)), что расстояние от неё до самой удалённой точки из исходного набора (растояние евклидово) 
+минимально
+
+def function_2(matrix):
+    trace = 0
+    matrix_tr = np.transpose(matrix)
+    matrix_mult = np.matrix(matrix)*np.matrix(matrix_tr)
+    for i in range (0,len(matrix_mult[:,0]),1):
+        trace = trace + matrix_mult[i,i]
+    return trace
