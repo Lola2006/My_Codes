@@ -1,0 +1,62 @@
+ 
+create volatile table final_table , no log as(
+select
+a.report_dt,
+a.customer_id,
+a.package_start_dt,
+case when  i.customer_id is not NULL  then 1 else 0 end  as zp_open,
+case when  zp_open=1  then 100 else  a.sale_discount_rate end as sale_discount_rate,
+case when (zp_open=1 and a.report_dt=month_end(a.package_start_dt)) then 100 else a.current_discount_rate end as  current_discount_rate,
+case when h.customer_id is not NULL or coalesce(f.osz_balance,0)>10000 or coalesce(b.zp,0)>0  then 1 else 0 end as active_package,
+case when coalesce(b.zp,0)>0   then 1 else 0 end  as zp,
+case when coalesce(b.salary,0)>0 then 1 else 0 end as salary_client,
+COALESCE(c.bonus_type,'N/A') as bonus_type,
+case when coalesce(abs(d.ALL_POS_CARD),0) >0 then  1 else 0 end as has_card_pos,
+coalesce(b.salary,0) as salary_amt,
+abs(coalesce(d.ALL_POS,0)) as ALL_POS,
+abs(coalesce(d.ALL_POS_PROFILE,0)) as ALL_POS_PROFILE,
+abs(coalesce(d.ALL_POS_CARD,0)) as ALL_POS_CARD,
+case
+    when abs(coalesce(d.ALL_POS_CARD,0))  between 0 and 5000 then 0
+    when abs(coalesce(d.ALL_POS_CARD,0))  between 5000 and 15000 then 0.02
+    when abs(coalesce(d.ALL_POS_CARD,0))  between 15000 and 75000 then 0.05
+    when abs(coalesce(d.ALL_POS_CARD,0))  >75000 then 0.1
+end as CARD_POS_CB,
+abs(coalesce(d.AUTO_POS,0)) as AUTO_POS,
+abs(coalesce(d.RAZVL_POS,0)) as RAZVL_POS,
+case when CARD_POS_CB*abs(coalesce(d.AUTO_POS,0)) >15000 then 15000 else CARD_POS_CB*abs(coalesce(d.AUTO_POS,0))  end as AUTO_CB,
+case when CARD_POS_CB*abs(coalesce(d.RAZVL_POS,0))>15000 then 15000 else CARD_POS_CB*abs(coalesce(d.RAZVL_POS,0)) end as RAZVL_CB,
+coalesce(e.osz_balance,0) as sa_balance,
+coalesce(e.sum_interest_rate,0)/e.agr_cnt  as sa_rate,
+coalesce(p.osz_balance,0) as ca_balance_rur,
+coalesce(f.osz_balance,0) as ca_balance,
+coalesce(g.osz_balance,0) as sks_balance
+from packages a
+    left join packages_salary_zp b
+        on a.customer_id=b.customer_id
+        and a.report_dt=b.report_dt
+    left join package_type c
+        on a.customer_id=c.customer_id
+        and a.report_dt=c.report_dt
+    left join oborot d
+        on a.customer_id=d.customer_id
+        and a.report_dt=d.report_dt
+    left join sa e
+        on a.customer_id=e.customer_id
+        and e.report_dt=a.report_dt
+    left join ca_acct f
+        on a.customer_id=f.customer_id
+        and a.report_dt=f.report_dt
+    left join  sks_acct g
+        on a.customer_id=g.customer_id
+        and a.report_dt=g.report_dt
+    left join oborot_3 h
+        on a.customer_id=h.customer_id
+        and a.report_dt=h.report_dt
+    left join zp_open_month i
+        on a.customer_id=i.customer_id
+        and a.report_dt=i.report_dt
+    left join ca_acct_rur p
+        on a.customer_id=p.customer_id
+        and a.report_dt=p.report_dt
+) with data primary index(customer_id) on commit preserve rows;       
